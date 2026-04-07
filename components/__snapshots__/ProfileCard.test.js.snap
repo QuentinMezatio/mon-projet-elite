@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`Jour 1 : ProfileCard doit conserver le rendu avec un snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="p-4 border rounded-xl shadow-md bg-white"
+  >
+    <h2
+      class="text-xl font-bold text-blue-600"
+    >
+      Stark
+    </h2>
+    <p
+      class="text-gray-500"
+    >
+      Développeur Next.js
+    </p>
+  </div>
+</DocumentFragment>
+`;
