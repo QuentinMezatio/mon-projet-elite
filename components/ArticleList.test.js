@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import ArticleList from './ArticleList'
 
 const mockArticles = [
@@ -14,9 +14,11 @@ test('doit afficher les articles après avoir reçu les données', async () => {
     })
   );
 
-  // On dessine le composant et on attend qu'il finisse
-  render(await ArticleList());
+  // On dessine le composant
+  render(<ArticleList />);
 
-  // On vérifie que le titre en plastique est bien affiché
-  expect(screen.getByText(/Mon premier article/i)).toBeInTheDocument();
+  // On attend que les articles soient chargés et affichés
+  await waitFor(() => {
+    expect(screen.getByText(/Mon premier article/i)).toBeInTheDocument();
+  });
 });
