@@ -1,22 +1,28 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
+import dynamic from 'next/dynamic'
+
 import { supabase } from '@/lib/supabaseClient'
 import SearchBar from '@/components/SearchBar'
-// ArticleList is dynamically imported to avoid SSR hydration issues
-const ArticleList = dynamic(() => import('@/components/ArticleList'), {
-  loading: () => <Skeleton />
-})
 import ProfileCard from '@/components/ProfileCard'
 import RegisterForm from '@/components/RegisterForm'
 import Dropdown from '@/components/Dropdown'
-import Image from 'next/image'
-import dynamic from 'next/dynamic'
 import Skeleton from '@/components/Skeleton'
+
+// ArticleList is dynamically imported to avoid SSR hydration issues
+// Il est placé ICI, après avoir importé 'dynamic' et 'Skeleton'
+const ArticleList = dynamic(() => import('@/components/ArticleList'), {
+  loading: () => <Skeleton />
+})
 
 export default function Home() {
   // État pour capturer le texte de la nouvelle tâche
   const [newTask, setNewTask] = useState('')
+  // Ajout d'états pour le chargement et les messages
+  const [isLoading, setIsLoading] = useState(false)
+  const [message, setMessage] = useState('')
 
   // Fonction pour envoyer la donnée à Supabase
   const handleAddData = async (e: React.FormEvent) => {
@@ -24,18 +30,28 @@ export default function Home() {
     
     if (!newTask.trim()) return
 
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert([{ title: newTask, is_completed: false }])
-      .select()
+    setIsLoading(true)
+    setMessage('')
 
-    if (error) {
-      console.error("Erreur Supabase :", error.message)
-      alert("Erreur lors de l'envoi")
-    } else {
-      console.log("Succès ! Tâche ajoutée :", data)
-      setNewTask('') // Vide le champ après l'envoi
-      alert("Donnée enregistrée dans la base de données !")
+    try {
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert([{ title: newTask, is_completed: false }])
+        .select()
+
+      if (error) {
+        console.error("Erreur Supabase :", error.message)
+        setMessage("Erreur lors de l'envoi: " + error.message)
+      } else {
+        console.log("Succès ! Tâche ajoutée :", data)
+        setNewTask('') // Vide le champ après l'envoi
+        setMessage("Donnée enregistrée dans la base de données !")
+      }
+    } catch (err) {
+      console.error("Erreur réseau :", err)
+      setMessage("Erreur réseau. Veuillez réessayer.")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -75,21 +91,24 @@ export default function Home() {
             {/* --- NOUVELLE SECTION : TEST SUPABASE --- */}
             <section className="bg-blue-50 p-6 rounded-2xl shadow-sm border border-blue-200">
               <h2 className="text-sm font-bold uppercase tracking-wider text-blue-500 mb-4">Ajouter à la base</h2>
-              <div className="space-y-3">
+              <form onSubmit={handleAddData} className="space-y-3">
                 <input 
                   type="text" 
                   value={newTask}
                   onChange={(e) => setNewTask(e.target.value)}
                   placeholder="Ex: Apprendre Next.js"
                   className="w-full p-2 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  disabled={isLoading}
                 />
                 <button 
-                  onClick={handleAddData}
-                  className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition"
+                  type="submit"
+                  disabled={isLoading || !newTask.trim()}
+                  className="w-full bg-blue-600 text-white py-2 rounded-lg font-bold hover:bg-blue-700 transition disabled:opacity-50"
                 >
-                  Envoyer à Supabase
+                  {isLoading ? 'Envoi en cours...' : 'Envoyer à Supabase'}
                 </button>
-              </div>
+                {message && <p className={`text-sm ${message.includes('Erreur') ? 'text-red-500' : 'text-green-500'}`}>{message}</p>}
+              </form>
             </section>
           </div>
 
